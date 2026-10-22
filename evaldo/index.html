@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <title>Mapa de Árvores do Parque Evaldo</title>
+  <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no">
+  <link href="https://api.mapbox.com/mapbox-gl-js/v3.21.0/mapbox-gl.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Exo:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet">
+  <link rel="icon" href="./favicon.png" type="image/png">
+
+  <meta property="og:title" content="Mapa de Árvores do Parque Evaldo" />
+  <meta property="og:url" content="https://geo.elmoneto.net/evaldo" />
+  <meta property="og:image" content="./mapa.jpg" />
+  <meta name="fediverse:creator" content="@elmoneto@mastodon.com.br" />
+
+  <script src="https://api.mapbox.com/mapbox-gl-js/v3.21.0/mapbox-gl.js"></script>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+    }
+
+    #map {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      width: 100%;
+    }
+
+    .mapboxgl-popup {
+      background-color: rgba(255, 255, 255, 0.219) !important;
+      max-width: 350px !important;
+      font-family: 'Exo', sans-serif;
+      border-radius: 5px !important;
+      z-index: 10 !important;
+    }
+
+    .mapboxgl-popup-content {
+      max-height: 400px;
+      overflow-y: auto;
+    }
+  </style>
+</head>
+
+<body>
+  <div id="map"></div>
+  <script>
+    mapboxgl.accessToken = 'pk.eyJ1IjoibmV0b2VsbW8iLCJhIjoiY2toaDYyaDI1MDFyZTJ3cHRnMjJlYXphOCJ9.UqyflCw6iItmhZWwEtlDNw';
+    const map = new mapboxgl.Map({
+      style: 'mapbox://styles/netoelmo/cmo6bzpg9000v01qo9c12ehnp',
+      center: [-35.889448, -7.2219],
+      zoom: 18.5,
+      maxZoom: 21,
+      minZoom: 15,
+      // maxBounds: [
+      //   [-35.891873, -7.225009],
+      //   [-35.886675, -7.219105]
+      // ],
+      maxPitch: 70,
+      pitch: 55,
+      bearing: -17.6,
+      container: 'map',
+      antialias: true
+    });
+
+    const geolocate = new mapboxgl.GeolocateControl({
+      positionOptions: {
+        enableHighAccuracy: true
+      },
+      trackUserLocation: true,
+      showUserHeading: true,
+      showAccuracyCircle: true
+    });
+
+    map.addControl(geolocate, 'top-right');
+
+    map.on('style.load', () => {
+      geolocate.trigger();
+    });
+
+    class LogoControl {
+      onAdd(map) {
+        this._map = map;
+        this._container = document.createElement('div');
+        this._container.className = 'mapboxgl-ctrl';
+
+        const link = document.createElement('a');
+        link.href = 'https://instagram.com/omapapb';
+        link.target = '_blank';
+        link.rel = 'noopener noreferrer';
+
+        const img = document.createElement('img');
+        img.src = 'logo.png';
+        img.alt = 'Logo';
+        img.style.cssText = 'width: 50px; height: auto; display: block; cursor: pointer;';
+
+        // Nest image inside anchor
+        link.appendChild(img);
+        this._container.appendChild(link);
+
+        return this._container;
+      }
+
+      onRemove() {
+        this._container.parentNode.removeChild(this._container);
+        this._map = undefined;
+      }
+    }
+
+    map.addControl(new LogoControl(), 'top-left');
+
+    class DownloadControl {
+      onAdd(map) {
+        this._map = map;
+        this._container = document.createElement('div');
+        this._container.className = 'mapboxgl-ctrl';
+
+        const link = document.createElement('a');
+        link.href = 'https://doi.org/10.5281/zenodo.18810614';
+        link.target = '_blank';
+        link.rel = 'noopener noreferrer';
+        link.style.cssText = 'text-decoration: none!important; color: rgb(50, 50, 50)';
+
+        const p = document.createElement('p');
+        p.innerText = '⬇️ Download do Mapa';
+        p.style.cssText = 'text-align: center; font-family: \'Exo\', sans-serif; background-color: rgba(255, 255, 255, 0.75); border-radius: 5px; padding: 4px; width: 150px; height: auto; display: block; cursor: pointer;';
+
+        link.appendChild(p);
+        this._container.appendChild(link);
+
+        return this._container;
+      }
+
+      onRemove() {
+        this._container.parentNode.removeChild(this._container);
+        this._map = undefined;
+      }
+    }
+
+    map.addControl(new DownloadControl(), 'bottom-right');
+
+    map.addControl(new mapboxgl.NavigationControl(), 'top-right');
+
+    const geojsonData = {
+      type: 'FeatureCollection',
+      features: [
+        {
+          type: 'Feature',
+          geometry: { type: 'Point', coordinates: [-35.889438, -7.2119] },
+          properties: { name: 'New York', description: 'The Big Apple' }
+        },
+        {
+          type: 'Feature',
+          geometry: { type: 'Point', coordinates: [-35.89238, -7.2229] },
+          properties: { name: 'Brooklyn', description: 'Cool neighborhood' }
+        }
+      ]
+    };
+
+    map.on('load', () => {
+
+      map.addSource('my-points', {
+        type: 'geojson',
+        data: './arvores_banco.geojson'
+      });
+
+      map.addLayer({
+        id: 'my-points-layer',
+        type: 'circle',
+        source: 'my-points',
+        paint: {
+          'circle-radius': 8,
+          'circle-color': ['get', 'cor'],
+          'circle-stroke-width': 2,
+          'circle-stroke-color': '#ffffff'
+        }
+      });
+
+      map.on('click', 'my-points-layer', (e) => {
+        const feature = e.features[0];
+        const coordinates = feature.geometry.coordinates.slice();
+        const species = feature.properties.species ? feature.properties.species : 'Árvore';
+        const species_pt = feature.properties['species:pt'] ? feature.properties['species:pt'] : '';
+        const descricao = (feature.properties['descricao_wiki'] ?? feature.properties['descricao_custom']) ?? '';
+        const imagem = feature.properties['img_wiki'] ?? '';
+        const nome_popular = species_pt ? ' (' + species_pt + ')' : '';
+
+        while (Math.abs(e.lngLat.lng - coordinates[0]) > 180) {
+          coordinates[0] += e.lngLat.lng > coordinates[0] ? 360 : -360;
+        }
+
+        new mapboxgl.Popup()
+          .setLngLat(coordinates)
+          .setHTML(`<div style="text-align:center"><img width="200px"src="${imagem}"/></div><h3><em>${species}</em>${nome_popular}</h3><p>${descricao}</p>`)
+          .addTo(map);
+      });
+
+      map.on('mouseenter', 'my-points-layer', () => {
+        map.getCanvas().style.cursor = 'pointer';
+      });
+      map.on('mouseleave', 'my-points-layer', () => {
+        map.getCanvas().style.cursor = '';
+      });
+
+    });
+  </script>
+  </script>
+
+</body>
+
+</html>
